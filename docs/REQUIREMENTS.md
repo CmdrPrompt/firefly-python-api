@@ -92,3 +92,33 @@ of any consumer project's configuration flow.
 - Credentials are read via `load_config()` from a `.env` file or environment.
 - No write operations (`create_transaction`) are included — read-only only.
 - Tests are skipped automatically if `FIREFLY_URL` or `FIREFLY_TOKEN` is absent.
+
+## REQ-005 Typed Return Values
+
+**As a** developer using an IDE,
+**I want** concrete types for the data structures returned by `FireflyClient`,
+**so that** I get accurate code completion and type checking in VS Code and mypy.
+
+### Use cases
+
+- UC-005-1: `get_asset_accounts()` returns `list[AssetAccount]` where
+  `AssetAccount` is a `TypedDict` with keys `id: str` and `name: str`.
+- UC-005-2: `get_latest_transaction_date()` return type remains `str | None`
+  (already precise).
+- UC-005-3: `create_transaction(payload)` accepts a `TransactionPayload`
+  `TypedDict` describing the required and optional fields:
+  `type`, `date`, `amount`, `description`, `source_id`, `destination_id`,
+  `currency_code`.
+- UC-005-4: `get_bills()`, `get_budgets()`, `get_budget_limits()`, and
+  `get_categories()` return `list[BillData]`, `list[BudgetData]`,
+  `list[BudgetLimitData]`, and `list[CategoryData]` respectively — each a
+  `TypedDict` with at least `id: str` and `attributes: dict[str, Any]`.
+- UC-005-5: `get_summary()` return type remains `dict[str, Any]`
+  (summary structure varies by Firefly configuration).
+- UC-005-6: All `TypedDict` types are importable from `firefly_python_api`.
+
+### Constraints
+
+- No new runtime dependencies.
+- `mypy --strict` must pass.
+- Unit test coverage must not drop below baseline.

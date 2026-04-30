@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import requests
 
 from firefly_python_api._exceptions import FireflyConnectionError
+from firefly_python_api._types import (
+    AssetAccount,
+    BillData,
+    BudgetData,
+    BudgetLimitData,
+    CategoryData,
+    TransactionPayload,
+)
 
 
 class FireflyClient:
@@ -76,15 +84,15 @@ class FireflyClient:
     # REQ-002 — accounts and transactions
     # ------------------------------------------------------------------
 
-    def get_asset_accounts(self) -> list[dict[str, str]]:
+    def get_asset_accounts(self) -> list[AssetAccount]:
         """Return all asset accounts, fetching every page automatically.
 
         Returns
         -------
-        list[dict[str, str]]
-            Each item contains ``{"id": str, "name": str}``.
+        list[AssetAccount]
+            Each item contains ``id`` and ``name``.
         """
-        accounts: list[dict[str, str]] = []
+        accounts: list[AssetAccount] = []
         page = 1
         while True:
             data = self._get(
@@ -92,7 +100,7 @@ class FireflyClient:
                 params={"type": "asset", "page": page},
             )
             for item in data["data"]:
-                accounts.append({"id": item["id"], "name": item["attributes"]["name"]})
+                accounts.append(AssetAccount(id=item["id"], name=item["attributes"]["name"]))
             if page >= data["meta"]["pagination"]["total_pages"]:
                 break
             page += 1
@@ -121,46 +129,74 @@ class FireflyClient:
         raw_date: str = data["data"][0]["attributes"]["transactions"][0]["date"]
         return raw_date[:10]
 
-    def create_transaction(self, payload: dict[str, Any]) -> None:
+    def create_transaction(self, payload: TransactionPayload) -> None:
         """Post a new transaction to Firefly III.
 
         Parameters
         ----------
         payload:
-            Transaction payload as expected by ``POST /api/v1/transactions``.
+            Transaction data. Required fields: ``type``, ``date``, ``amount``,
+            ``description``. Optional: ``source_id``, ``destination_id``,
+            ``currency_code``.
 
         Raises
         ------
         FireflyConnectionError
             On any network error or non-2xx HTTP response.
         """
-        self._post(f"{self.url}/api/v1/transactions", payload)
+        self._post(f"{self.url}/api/v1/transactions", dict(payload))
 
     # ------------------------------------------------------------------
     # REQ-003 — reporting and resource read methods
     # ------------------------------------------------------------------
 
-    def get_bills(self) -> list[Any]:
-        """Return all bills (``data`` list from ``GET /api/v1/bills``)."""
-        return self._get(f"{self.url}/api/v1/bills")["data"]  # type: ignore[no-any-return]
+    def get_bills(self) -> list[BillData]:
+        """Return all bills from ``GET /api/v1/bills``.
 
-    def get_budgets(self) -> list[Any]:
-        """Return all budgets (``data`` list from ``GET /api/v1/budgets``)."""
-        return self._get(f"{self.url}/api/v1/budgets")["data"]  # type: ignore[no-any-return]
+        Returns
+        -------
+        list[BillData]
+            Raw ``data`` list from the Firefly III response.
+        """
+        return cast(list[BillData], self._get(f"{self.url}/api/v1/bills")["data"])
 
-    def get_budget_limits(self, budget_id: str) -> list[Any]:
-        """Return limits for a budget.
+    def get_budgets(self) -> list[BudgetData]:
+        """Return all budgets from ``GET /api/v1/budgets``.
+
+        Returns
+        -------
+        list[BudgetData]
+            Raw ``data`` list from the Firefly III response.
+        """
+        return cast(list[BudgetData], self._get(f"{self.url}/api/v1/budgets")["data"])
+
+    def get_budget_limits(self, budget_id: str) -> list[BudgetLimitData]:
+        """Return spending limits for a budget.
 
         Parameters
         ----------
         budget_id:
             Firefly III budget ID.
-        """
-        return self._get(f"{self.url}/api/v1/budgets/{budget_id}/limits")["data"]  # type: ignore[no-any-return]
 
-    def get_categories(self) -> list[Any]:
-        """Return all categories (``data`` list from ``GET /api/v1/categories``)."""
-        return self._get(f"{self.url}/api/v1/categories")["data"]  # type: ignore[no-any-return]
+        Returns
+        -------
+        list[BudgetLimitData]
+            Raw ``data`` list from the Firefly III response.
+        """
+        return cast(
+            list[BudgetLimitData],
+            self._get(f"{self.url}/api/v1/budgets/{budget_id}/limits")["data"],
+        )
+
+    def get_categories(self) -> list[CategoryData]:
+        """Return all categories from ``GET /api/v1/categories``.
+
+        Returns
+        -------
+        list[CategoryData]
+            Raw ``data`` list from the Firefly III response.
+        """
+        return cast(list[CategoryData], self._get(f"{self.url}/api/v1/categories")["data"])
 
     def get_summary(self, start: str, end: str) -> dict[str, Any]:
         """Return the summary dict from ``GET /api/v1/summary/basic``.
@@ -171,6 +207,12 @@ class FireflyClient:
             Start date in ``YYYY-MM-DD`` format.
         end:
             End date in ``YYYY-MM-DD`` format.
+
+        Returns
+        -------
+        dict[str, Any]
+            Summary data keyed by category (structure varies by Firefly
+            configuration).
         """
         return self._get(  # type: ignore[no-any-return]
             f"{self.url}/api/v1/summary/basic",
