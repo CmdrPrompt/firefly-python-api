@@ -3,7 +3,10 @@ name = "firefly-python-api"
 version = "0.1.0"
 description = "Python client library for the Firefly III REST API — shared HTTP layer with credential management and API coverage for accounts, transactions, and reporting resources."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "requests",
+    "python-dotenv",
+]
 
 [project.optional-dependencies]
 dev = [
