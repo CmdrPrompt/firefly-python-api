@@ -43,6 +43,26 @@ class TransactionPayload(_TransactionPayloadRequired, total=False):
     """ISO 4217 currency code, e.g. ``"SEK"``."""
 
 
+class BillPayload(TypedDict):
+    """Payload for :meth:`FireflyClient.create_bill`.
+
+    All fields are required: ``name``, ``amount_min``, ``amount_max``,
+    ``date``, ``repeat_freq``, ``active``.
+    """
+
+    name: str
+    amount_min: str
+    """Minimum expected amount as a decimal string, e.g. ``"10.00"``."""
+    amount_max: str
+    """Maximum expected amount as a decimal string, e.g. ``"15.00"``."""
+    date: str
+    """First bill date in ``YYYY-MM-DD`` format."""
+    repeat_freq: str
+    """Repetition frequency, e.g. ``"weekly"``, ``"monthly"``, ``"quarterly"``,
+    ``"half-year"``, ``"yearly"``. Not validated client-side."""
+    active: bool
+
+
 class BillData(TypedDict):
     """A single item from :meth:`FireflyClient.get_bills`."""
 

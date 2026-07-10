@@ -5,6 +5,7 @@ from __future__ import annotations
 from firefly_python_api import (
     AssetAccount,
     BillData,
+    BillPayload,
     BudgetData,
     BudgetLimitData,
     CategoryData,
@@ -22,6 +23,9 @@ class TestTypesAreImportable:
 
     def test_bill_data_is_importable(self):
         assert BillData is not None
+
+    def test_bill_payload_is_importable(self):
+        assert BillPayload is not None
 
     def test_budget_data_is_importable(self):
         assert BudgetData is not None
@@ -64,6 +68,24 @@ class TestTransactionPayload:
             "currency_code": "SEK",
         }
         assert payload["currency_code"] == "SEK"
+
+
+class TestBillPayload:
+    def test_required_fields(self):
+        payload: BillPayload = {
+            "name": "Netflix",
+            "amount_min": "10.00",
+            "amount_max": "15.00",
+            "date": "2024-03-15",
+            "repeat_freq": "monthly",
+            "active": True,
+        }
+        assert payload["name"] == "Netflix"
+        assert payload["amount_min"] == "10.00"
+        assert payload["amount_max"] == "15.00"
+        assert payload["date"] == "2024-03-15"
+        assert payload["repeat_freq"] == "monthly"
+        assert payload["active"] is True
 
 
 class TestResourceDataTypes:

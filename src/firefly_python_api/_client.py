@@ -10,6 +10,7 @@ from firefly_python_api._exceptions import FireflyConnectionError
 from firefly_python_api._types import (
     AssetAccount,
     BillData,
+    BillPayload,
     BudgetData,
     BudgetLimitData,
     CategoryData,
@@ -83,6 +84,25 @@ class FireflyClient:
             response.raise_for_status()
         except requests.RequestException as exc:
             raise FireflyConnectionError(f"POST {endpoint} failed: {exc}") from exc
+
+    def _post_expect(
+        self, endpoint: str, payload: dict[str, Any], expected_statuses: tuple[int, ...]
+    ) -> None:
+        """POST ``payload`` to ``endpoint``; raise unless the response status is in
+        ``expected_statuses``.
+
+        Unlike :meth:`_post`, this does not rely on ``raise_for_status()`` (which
+        only raises on 4xx/5xx). Any status code outside ``expected_statuses`` —
+        including unexpected 2xx/3xx codes — raises :class:`FireflyConnectionError`.
+        """
+        try:
+            response = self.session.post(endpoint, json=payload)
+        except requests.RequestException as exc:
+            raise FireflyConnectionError(f"POST {endpoint} failed: {exc}") from exc
+        if response.status_code not in expected_statuses:
+            raise FireflyConnectionError(
+                f"POST {endpoint} failed: unexpected status {response.status_code}"
+            )
 
     # ------------------------------------------------------------------
     # REQ-001 — connectivity
@@ -242,6 +262,29 @@ class FireflyClient:
             f"{self.url}/api/v1/summary/basic",
             params={"start": start, "end": end},
         )
+
+    # ------------------------------------------------------------------
+    # REQ-007 — create bill
+    # ------------------------------------------------------------------
+
+    def create_bill(self, payload: BillPayload) -> None:
+        """Post a new bill to Firefly III.
+
+        Parameters
+        ----------
+        payload:
+            Bill data. Required fields: ``name``, ``amount_min``,
+            ``amount_max``, ``date``, ``repeat_freq``, ``active``.
+            ``repeat_freq`` is not validated client-side; invalid values are
+            rejected by the Firefly III API.
+
+        Raises
+        ------
+        FireflyConnectionError
+            On any network error or a response status other than 200/201
+            (including 422 for a duplicate bill name).
+        """
+        self._post_expect(f"{self.url}/api/v1/bills", dict(payload), (200, 201))
 
     # ------------------------------------------------------------------
     # REQ-006 — withdrawal transactions

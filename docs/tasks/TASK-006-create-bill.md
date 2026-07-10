@@ -2,7 +2,7 @@
 
 ## Status
 
-in-progress
+done
 
 ## Requirements
 
@@ -47,40 +47,40 @@ design precedent to follow, not a blocking dependency for this task.
 Scenarios are inline (BDD-ABSENT) and lift-ready for `.feature` extraction if
 BDD tooling is adopted later.
 
-- [ ] Scenario: Bill creation succeeds on HTTP 200
+- [x] Scenario: Bill creation succeeds on HTTP 200
       Given a valid `BillPayload`
       When `create_bill(payload)` is called and the API responds with HTTP 200
       Then the call completes without raising an exception
 
-- [ ] Scenario: Bill creation succeeds on HTTP 201
+- [x] Scenario: Bill creation succeeds on HTTP 201
       Given a valid `BillPayload`
       When `create_bill(payload)` is called and the API responds with HTTP 201
       Then the call completes without raising an exception
 
-- [ ] Scenario: Bill creation fails on duplicate bill name (422)
+- [x] Scenario: Bill creation fails on duplicate bill name (422)
       Given a `BillPayload` whose `name` duplicates an existing bill
       When `create_bill(payload)` is called and the API responds with HTTP 422
       Then a `FireflyConnectionError` is raised
 
-- [ ] Scenario: Bill creation fails on any other non-success status
+- [x] Scenario: Bill creation fails on any other non-success status
       Given a valid `BillPayload`
       When `create_bill(payload)` is called and the API responds with a status
       other than 200 or 201
       Then a `FireflyConnectionError` is raised
 
-- [ ] Scenario: Bill creation fails on a network/connection error
+- [x] Scenario: Bill creation fails on a network/connection error
       Given a valid `BillPayload`
       When `create_bill(payload)` is called and the underlying HTTP request
       fails with a connection error
       Then a `FireflyConnectionError` is raised
 
-- [ ] Scenario: BillPayload defines the required fields
+- [x] Scenario: BillPayload defines the required fields
       Given the `BillPayload` `TypedDict` in `src/firefly_python_api/_types.py`
       Then it declares required fields `name: str`, `amount_min: str`,
       `amount_max: str`, `date: str` (`YYYY-MM-DD`), `repeat_freq: str`,
       `active: bool`
 
-- [ ] Scenario: repeat_freq is not validated client-side
+- [x] Scenario: repeat_freq is not validated client-side
       Given a `BillPayload` with any `repeat_freq` value
       When `create_bill(payload)` is called
       Then the client sends the value to the API without validating it against
@@ -88,12 +88,12 @@ BDD tooling is adopted later.
       `yearly`); invalid values are rejected by the Firefly III API, not the
       client
 
-- [ ] Scenario: BillPayload is importable from the package
+- [x] Scenario: BillPayload is importable from the package
       Given the `firefly_python_api` package
       When `BillPayload` is imported from `firefly_python_api`
       Then the import succeeds
 
-- [ ] Scenario: Type checking and quality gates pass
+- [x] Scenario: Type checking and quality gates pass
       Given the completed implementation of `create_bill` and `BillPayload`
       When `mypy --strict` is run on `src/`, and `make lint && make test` are
       run
@@ -115,8 +115,18 @@ None.
 
 ## Completion
 
-**Date:**
-**Summary:**
+**Date:** 2026-07-10
+**Summary:** Added `FireflyClient.create_bill(payload)` (`POST /api/v1/bills`, 200/201 success,
+`FireflyConnectionError` otherwise) and the `BillPayload` TypedDict (`name`, `amount_min`,
+`amount_max`, `date`, `repeat_freq`, `active`), exported from `firefly_python_api`. 76 tests pass,
+100% coverage on `src/`, `mypy --strict` and `make lint` clean. `_post_expect` added as a
+dedicated helper (distinct from the pre-existing `_post`) since this requirement needs
+exactly HTTP 200/201 to count as success — `_post`'s `raise_for_status()` only rejects
+4xx/5xx and would silently accept e.g. 204. Test Design Reviewer scored the added test
+suite 7.9/10 (Farley Index); no correctness bugs found, only minor nits (some overlap
+between the 201-success and request-shape tests, exact `assert_called_once_with` call-shape
+coupling, no test locks down `_post`/`create_transaction` was left unaffected). Judged
+non-blocking per the Test review gate (stylistic, not correctness) and left as-is.
 **Files changed:**
 
 - `src/firefly_python_api/_types.py` — modified (BillPayload added)
