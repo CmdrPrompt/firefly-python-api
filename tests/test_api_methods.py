@@ -491,3 +491,72 @@ class TestGetWithdrawalTransactions:
         with patch.object(client.session, "get", return_value=resp):
             with pytest.raises(FireflyConnectionError):
                 client.get_withdrawal_transactions("2024-01-01", "2024-12-31")
+
+
+# ---------------------------------------------------------------------------
+# create_bill
+# ---------------------------------------------------------------------------
+
+
+class TestCreateBill:
+    def _payload(self) -> dict:
+        return {
+            "name": "Netflix",
+            "amount_min": "10.00",
+            "amount_max": "15.00",
+            "date": "2024-03-15",
+            "repeat_freq": "monthly",
+            "active": True,
+        }
+
+    def test_posts_to_bills_endpoint(self):
+        client = make_client()
+        with patch.object(
+            client.session, "post", return_value=mock_response({}, status_code=201)
+        ) as mock_post:
+            client.create_bill(self._payload())
+        mock_post.assert_called_once_with(
+            "https://firefly.example.com/api/v1/bills",
+            json=self._payload(),
+        )
+
+    def test_accepts_200_as_success(self):
+        client = make_client()
+        with patch.object(client.session, "post", return_value=mock_response({}, status_code=200)):
+            client.create_bill(self._payload())  # should not raise
+
+    def test_accepts_201_as_success(self):
+        client = make_client()
+        with patch.object(client.session, "post", return_value=mock_response({}, status_code=201)):
+            client.create_bill(self._payload())  # should not raise
+
+    def test_raises_on_duplicate_name_422(self):
+        client = make_client()
+        with patch.object(client.session, "post", return_value=mock_response({}, status_code=422)):
+            with pytest.raises(FireflyConnectionError):
+                client.create_bill(self._payload())
+
+    def test_raises_on_other_non_success_status(self):
+        client = make_client()
+        with patch.object(client.session, "post", return_value=mock_response({}, status_code=204)):
+            with pytest.raises(FireflyConnectionError):
+                client.create_bill(self._payload())
+
+    def test_raises_on_connection_error(self):
+        client = make_client()
+        with patch.object(client.session, "post", side_effect=requests.ConnectionError("refused")):
+            with pytest.raises(FireflyConnectionError):
+                client.create_bill(self._payload())
+
+    def test_repeat_freq_is_sent_without_validation(self):
+        client = make_client()
+        payload = self._payload()
+        payload["repeat_freq"] = "not-a-real-value"
+        with patch.object(
+            client.session, "post", return_value=mock_response({}, status_code=200)
+        ) as mock_post:
+            client.create_bill(payload)  # should not raise — no client-side validation
+        mock_post.assert_called_once_with(
+            "https://firefly.example.com/api/v1/bills",
+            json=payload,
+        )

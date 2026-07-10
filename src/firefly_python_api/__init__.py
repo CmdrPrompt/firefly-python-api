@@ -6,6 +6,7 @@ from firefly_python_api._exceptions import FireflyConnectionError
 from firefly_python_api._types import (
     AssetAccount,
     BillData,
+    BillPayload,
     BudgetData,
     BudgetLimitData,
     CategoryData,
@@ -16,6 +17,7 @@ from firefly_python_api._types import (
 __all__ = [
     "AssetAccount",
     "BillData",
+    "BillPayload",
     "BudgetData",
     "BudgetLimitData",
     "CategoryData",
