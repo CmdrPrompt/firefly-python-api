@@ -315,6 +315,8 @@ class TestGetWithdrawalTransactions:
                                 "amount": "42.50",
                                 "destination_name": "Grocery Store",
                                 "category_name": "Groceries",
+                                "source_name": "Checking Account",
+                                "source_id": "7",
                             }
                         ]
                     }
@@ -339,6 +341,8 @@ class TestGetWithdrawalTransactions:
                 "amount": "42.50",
                 "destination_name": "Grocery Store",
                 "category_name": "Groceries",
+                "source_name": "Checking Account",
+                "source_id": "7",
             }
         ]
 
@@ -409,12 +413,16 @@ class TestGetWithdrawalTransactions:
                 "amount": "10.00",
                 "destination_name": "Shop A",
                 "category_name": "Misc",
+                "source_name": None,
+                "source_id": None,
             },
             {
                 "date": "2024-02-05",
                 "amount": "20.00",
                 "destination_name": "Shop B",
                 "category_name": "Misc",
+                "source_name": None,
+                "source_id": None,
             },
         ]
 
@@ -474,6 +482,8 @@ class TestGetWithdrawalTransactions:
                 "amount": "10.00",
                 "destination_name": None,
                 "category_name": None,
+                "source_name": None,
+                "source_id": None,
             }
         ]
 

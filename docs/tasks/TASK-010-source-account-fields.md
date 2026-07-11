@@ -2,7 +2,7 @@
 
 ## Status
 
-todo
+done
 
 ## Requirements
 
@@ -46,7 +46,7 @@ default to `None` when absent.
 
 Scenarios are lift-ready for `.feature` extraction if BDD tooling is adopted later.
 
-- [ ] Scenario: `TransactionRead` carries source account fields (UC-006-5)
+- [x] Scenario: `TransactionRead` carries source account fields (UC-006-5)
       Given a Firefly III API response containing a withdrawal transaction split with
       `source_id` and `source_name` set
       When that split is converted into a `TransactionRead`
@@ -54,7 +54,7 @@ Scenarios are lift-ready for `.feature` extraction if BDD tooling is adopted lat
       split's `source_name`
       And `source_id: str | None` equal to the split's `source_id`
 
-- [ ] Scenario: Default missing source fields to None (UC-006-5)
+- [x] Scenario: Default missing source fields to None (UC-006-5)
       Given a Firefly III API response for a withdrawal transaction split where
       `source_name` and/or `source_id` are absent
       When that split is converted into a `TransactionRead`
@@ -62,7 +62,7 @@ Scenarios are lift-ready for `.feature` extraction if BDD tooling is adopted lat
       absent `source_name`
       And `source_id` set to `None` for any absent `source_id`
 
-- [ ] Scenario: Existing fields and callers are unaffected
+- [x] Scenario: Existing fields and callers are unaffected
       Given the existing `get_withdrawal_transactions` pagination and multi-split
       flattening behavior (TASK-005)
       When `source_name`/`source_id` are added to `TransactionRead`
@@ -70,7 +70,7 @@ Scenarios are lift-ready for `.feature` extraction if BDD tooling is adopted lat
       as before
       And no existing caller of `get_withdrawal_transactions` breaks
 
-- [ ] Scenario: Type checking and test suite pass (constraints)
+- [x] Scenario: Type checking and test suite pass (constraints)
       Given the implementation of the widened `TransactionRead`
       When `mypy --strict` is run on `src/`
       Then it passes with no errors
@@ -91,8 +91,8 @@ None
 
 ## Completion
 
-**Date:**
-**Summary:**
+**Date:** 2026-07-11
+**Summary:** Widened `TransactionRead` with `source_name: str | None` and `source_id: str | None`, populated in `_split_to_transaction_read()` the same way as `destination_name`/`category_name` (default `None` when absent). Coverage held at 100%, `mypy --strict` and `make lint` pass.
 **Files changed:**
 
 - `src/firefly_python_api/_types.py` — modified (`TransactionRead` widened)
