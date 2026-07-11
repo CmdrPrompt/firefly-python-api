@@ -2,7 +2,7 @@
 
 ## Status
 
-todo
+done
 
 ## Requirements
 
@@ -113,9 +113,15 @@ None
 
 ## Completion
 
-**Date:**
-**Summary:**
+**Date:** 2026-07-11
+**Summary:** Added an optional `on_page: Callable[[int, int], None] | None` parameter to `get_withdrawal_transactions()`, invoked once per page immediately after that page's data is fetched and parsed, with exceptions propagating and halting further page fetches. Default `None` leaves prior behavior unchanged.
 **Files changed:**
-**Branch:**
-**Stage:**
-**Commit:**
+
+- `src/firefly_python_api/_client.py` — modified (`on_page` parameter added to `get_withdrawal_transactions`)
+- `tests/test_api_methods.py` — modified (on_page scenarios added)
+- `CHANGELOG.md` — modified
+- `docs/tasks/TASK-011-progress-callback.md` — modified
+
+**Branch:** `git checkout task/011-progress-callback`
+**Stage:** `git add src/firefly_python_api/_client.py tests/test_api_methods.py CHANGELOG.md docs/tasks/TASK-011-progress-callback.md`
+**Commit:** `git commit -m "Add progress callback to get_withdrawal_transactions (TASK-011)"`
