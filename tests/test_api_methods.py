@@ -587,13 +587,30 @@ class TestCreateBill:
         assert exc_info.value.status_code is None
         assert exc_info.value.response_body is None
 
-    def test_get_and_post_callers_leave_attributes_none(self):
+    def test_get_caller_leaves_attributes_none(self):
         client = make_client()
         resp = MagicMock()
         resp.raise_for_status.side_effect = requests.HTTPError("500")
         with patch.object(client.session, "get", return_value=resp):
             with pytest.raises(FireflyConnectionError) as exc_info:
                 client.get_bills()
+        assert exc_info.value.status_code is None
+        assert exc_info.value.response_body is None
+
+    def test_post_caller_leaves_attributes_none(self):
+        client = make_client()
+        resp = MagicMock()
+        resp.raise_for_status.side_effect = requests.HTTPError("500")
+        with patch.object(client.session, "post", return_value=resp):
+            with pytest.raises(FireflyConnectionError) as exc_info:
+                client.create_transaction(
+                    {
+                        "type": "withdrawal",
+                        "date": "2024-03-15",
+                        "amount": "100.00",
+                        "description": "Test",
+                    }
+                )
         assert exc_info.value.status_code is None
         assert exc_info.value.response_body is None
 
