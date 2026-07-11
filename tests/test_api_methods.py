@@ -536,21 +536,35 @@ class TestCreateBill:
             with pytest.raises(FireflyConnectionError):
                 client.create_bill(self._payload())
 
-    def test_422_carries_status_code_and_response_body(self):
+    @pytest.mark.parametrize(
+        ("status_code", "body"),
+        [
+            pytest.param(
+                422,
+                {"message": "The name has already been taken.", "errors": {"name": ["dup"]}},
+                id="422-duplicate-name",
+            ),
+            pytest.param(500, {"message": "server error"}, id="500-generic-non-2xx"),
+        ],
+    )
+    def test_non_success_status_carries_status_code_and_response_body(
+        self, status_code: int, body: dict
+    ) -> None:
         client = make_client()
-        body = {"message": "The name has already been taken.", "errors": {"name": ["dup"]}}
-        resp = mock_response(body, status_code=422)
+        resp = mock_response(body, status_code=status_code)
         with patch.object(client.session, "post", return_value=resp):
             with pytest.raises(FireflyConnectionError) as exc_info:
                 client.create_bill(self._payload())
-        assert exc_info.value.status_code == 422
+        assert exc_info.value.status_code == status_code
         assert exc_info.value.response_body == body
 
     def test_non_json_error_body_leaves_response_body_none(self):
         client = make_client()
         resp = MagicMock()
         resp.status_code = 500
-        resp.json.side_effect = ValueError("not JSON")
+        resp.json.side_effect = requests.exceptions.JSONDecodeError(
+            "Expecting value", "not json", 0
+        )
         with patch.object(client.session, "post", return_value=resp):
             with pytest.raises(FireflyConnectionError) as exc_info:
                 client.create_bill(self._payload())
@@ -562,16 +576,6 @@ class TestCreateBill:
         with patch.object(client.session, "post", return_value=mock_response({}, status_code=204)):
             with pytest.raises(FireflyConnectionError):
                 client.create_bill(self._payload())
-
-    def test_other_non_success_status_carries_attributes(self):
-        client = make_client()
-        body = {"message": "server error"}
-        resp = mock_response(body, status_code=500)
-        with patch.object(client.session, "post", return_value=resp):
-            with pytest.raises(FireflyConnectionError) as exc_info:
-                client.create_bill(self._payload())
-        assert exc_info.value.status_code == 500
-        assert exc_info.value.response_body == body
 
     def test_raises_on_connection_error(self):
         client = make_client()
