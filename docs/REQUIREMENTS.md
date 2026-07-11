@@ -212,3 +212,35 @@ or Firefly III's split-transaction structure.
   when the `status_code` and `response_body` attributes (UC-007-4) are added
   to the exception raised by `create_bill()`; no other behavioral change
   shall be introduced.
+
+## REQ-008 Progress Reporting for Paginated Fetches
+
+**As a** consumer application (e.g. firefly-bills-analyzer),
+**I want** to be notified after each page of a paginated fetch completes,
+**so that** I can render a progress indicator (e.g. a CLI progress bar) without
+this library taking a dependency on any particular UI/progress-bar toolkit.
+
+### Use cases
+
+- UC-008-1: `get_withdrawal_transactions(start, end, on_page=None)` accepts an
+  optional `on_page` callback: `Callable[[int, int], None] | None`. When
+  provided, the system shall invoke `on_page(page, total_pages)` once per
+  page, immediately after that page's data has been fetched and parsed
+  (`page` is the 1-indexed page just completed; `total_pages` is read from
+  that response's `meta.pagination.total_pages`).
+- UC-008-2: When `on_page` is `None` (the default), the system's behavior
+  shall be unchanged from today: no callback is invoked, and the return
+  value of `get_withdrawal_transactions()` is unaffected either way.
+- UC-008-3: The system shall invoke `on_page` synchronously in the same
+  thread as the fetch loop, after each page, in page order; an exception
+  raised by `on_page` shall propagate to the caller of
+  `get_withdrawal_transactions()` (the library shall not swallow it).
+
+### Constraints
+
+- No new runtime dependencies — `on_page` is a plain callable; this library
+  shall not import or depend on `tqdm` or any other progress-bar package.
+- Fully backward compatible: existing callers that do not pass `on_page` see
+  no behavioral change.
+- `mypy --strict` must pass.
+- Unit test coverage must not drop below baseline.
