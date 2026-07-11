@@ -120,7 +120,7 @@ None
 - `src/firefly_python_api/_client.py` — modified (`on_page` parameter added to `get_withdrawal_transactions`)
 - `tests/test_api_methods.py` — modified (on_page scenarios added)
 - `CHANGELOG.md` — modified
-- `README.md` — modified (documented `get_withdrawal_transactions`, `create_bill`, and `on_page` in Features/Usage)
+- `README.md` — modified (documented `get_withdrawal_transactions`, `create_bill`, `on_page`, `FireflyConnectionError.status_code`/`.response_body`, exported `TypedDict` types, and `make test-integration`)
 - `docs/tasks/TASK-011-progress-callback.md` — modified
 
 **Branch:** `git checkout task/011-progress-callback`
