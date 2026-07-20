@@ -1,3 +1,5 @@
+include .butler/Makefile
+
 .PHONY: help
 help:
 	@$(MAKE) --no-print-directory -f .butler/Makefile help
@@ -7,9 +9,7 @@ help:
 	@echo ""
 
 test:
-	uv run pytest tests/ --ignore=tests/integration --cov=src --cov-report=term-missing
+	uv run pytest $(TESTS_DIR)/ --ignore=tests/integration --cov=$(SRC_DIR) --cov-report=term-missing
 
 test-integration:
-	uv run pytest tests/integration/ -v
-
-include .butler/Makefile
+	uv run pytest tests/integration/ -v  --cov=$(SRC_DIR) --cov-report=term-missing
