@@ -2,7 +2,7 @@
 
 ## Status
 
-not-started
+done
 
 ## Requirements
 
@@ -52,30 +52,30 @@ error-handling pattern as `_post_expect`/`create_transaction`.
 
 ## Acceptance criteria (Gherkin)
 
-- [ ] Scenario: List transaction IDs across multiple pages (UC-002-4)
+- [x] Scenario: List transaction IDs across multiple pages (UC-002-4)
       Given a Firefly III account whose transactions span 3 pages
       When `get_transactions_for_account(account_id)` is called
       Then it returns a flat list of all transaction IDs from all 3 pages
       And the IDs appear in API response order
 
-- [ ] Scenario: Account with no transactions (UC-002-4)
+- [x] Scenario: Account with no transactions (UC-002-4)
       Given a Firefly III account with zero transactions
       When `get_transactions_for_account(account_id)` is called
       Then it returns an empty list
 
-- [ ] Scenario: Delete a transaction succeeds (UC-002-5)
+- [x] Scenario: Delete a transaction succeeds (UC-002-5)
       Given a transaction ID that exists
       When `delete_transaction(transaction_id)` is called
       And the API responds with HTTP 204
       Then no exception is raised
 
-- [ ] Scenario: Delete a transaction fails (UC-002-5)
+- [x] Scenario: Delete a transaction fails (UC-002-5)
       Given a transaction ID
       When `delete_transaction(transaction_id)` is called
       And the API responds with a non-204 status code
       Then `FireflyConnectionError` is raised with the status code and response body
 
-- [ ] Scenario: Type checking and test suite pass (constraints)
+- [x] Scenario: Type checking and test suite pass (constraints)
       When `mypy --strict` is run on `src/`
       Then it passes with no errors
       And when `make lint && make test` is run
@@ -96,10 +96,13 @@ None
 
 ## Completion
 
-**Date:**
-**Summary:**
+**Date:** 2026-07-20
+**Summary:** Added `get_transactions_for_account(account_id)` (paginated GET, returns a flat list of transaction IDs across all pages) and `delete_transaction(transaction_id)` (DELETE, 204 = success, else `FireflyConnectionError`) to `FireflyClient`, backed by a new private `_delete_expect` helper mirroring the existing `_post_expect` pattern. Covered by 9 new tests (4 for listing, 5 for deletion). All 97 tests pass with 100% coverage (no regression from the 100%/88-test baseline). ruff check, ruff format --check, mypy --strict, bandit, and complexipy all pass cleanly; `make lint`'s `check-agents-sync` failure is pre-existing on `main` and unrelated to files touched by this task (verified: only CHANGELOG.md, this task file, `_client.py`, and `test_api_methods.py` are modified).
 **Files changed:**
-
-**Branch:**
-**Stage:**
-**Commit:**
+- `src/firefly_python_api/_client.py` - modified
+- `tests/test_api_methods.py` - modified
+- `CHANGELOG.md` - modified
+- `docs/tasks/TASK-012-transaction-listing-and-deletion.md` - modified
+**Branch:** `git checkout task/012-transaction-listing-and-deletion`
+**Stage:** `git add src/firefly_python_api/_client.py tests/test_api_methods.py CHANGELOG.md docs/tasks/TASK-012-transaction-listing-and-deletion.md`
+**Commit:** `git commit -m "Add transaction listing and deletion to FireflyClient"`

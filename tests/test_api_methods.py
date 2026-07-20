@@ -598,6 +598,137 @@ class TestGetWithdrawalTransactions:
 
 
 # ---------------------------------------------------------------------------
+# get_transactions_for_account
+# ---------------------------------------------------------------------------
+
+
+class TestGetTransactionsForAccount:
+    def test_returns_ids_from_single_page(self):
+        client = make_client()
+        payload = {
+            "data": [{"id": "10"}, {"id": "11"}],
+            "meta": {"pagination": {"total_pages": 1}},
+        }
+        with patch.object(client.session, "get", return_value=mock_response(payload)) as mock_get:
+            result = client.get_transactions_for_account("42")
+        mock_get.assert_called_once_with(
+            "https://firefly.example.com/api/v1/accounts/42/transactions",
+            params={"page": 1},
+        )
+        assert result == ["10", "11"]
+
+    def test_fetches_all_pages_in_order(self):
+        client = make_client()
+        page1 = {
+            "data": [{"id": "1"}],
+            "meta": {"pagination": {"total_pages": 3}},
+        }
+        page2 = {
+            "data": [{"id": "2"}],
+            "meta": {"pagination": {"total_pages": 3}},
+        }
+        page3 = {
+            "data": [{"id": "3"}],
+            "meta": {"pagination": {"total_pages": 3}},
+        }
+        with patch.object(
+            client.session,
+            "get",
+            side_effect=[mock_response(page1), mock_response(page2), mock_response(page3)],
+        ) as mock_get:
+            result = client.get_transactions_for_account("42")
+        assert mock_get.call_count == 3
+        assert mock_get.call_args_list == [
+            call(
+                "https://firefly.example.com/api/v1/accounts/42/transactions",
+                params={"page": 1},
+            ),
+            call(
+                "https://firefly.example.com/api/v1/accounts/42/transactions",
+                params={"page": 2},
+            ),
+            call(
+                "https://firefly.example.com/api/v1/accounts/42/transactions",
+                params={"page": 3},
+            ),
+        ]
+        assert result == ["1", "2", "3"]
+
+    def test_returns_empty_list_when_no_transactions(self):
+        client = make_client()
+        payload = {"data": [], "meta": {"pagination": {"total_pages": 1}}}
+        with patch.object(client.session, "get", return_value=mock_response(payload)):
+            result = client.get_transactions_for_account("42")
+        assert result == []
+
+    def test_raises_on_http_error(self):
+        client = make_client()
+        resp = MagicMock()
+        resp.raise_for_status.side_effect = requests.HTTPError("500")
+        with patch.object(client.session, "get", return_value=resp):
+            with pytest.raises(FireflyConnectionError):
+                client.get_transactions_for_account("42")
+
+
+# ---------------------------------------------------------------------------
+# delete_transaction
+# ---------------------------------------------------------------------------
+
+
+class TestDeleteTransaction:
+    def test_deletes_and_returns_none_on_204(self):
+        client = make_client()
+        with patch.object(
+            client.session, "delete", return_value=mock_response(None, status_code=204)
+        ) as mock_delete:
+            result = client.delete_transaction("99")
+        mock_delete.assert_called_once_with("https://firefly.example.com/api/v1/transactions/99")
+        assert result is None
+
+    def test_raises_on_non_204_status(self):
+        client = make_client()
+        with patch.object(
+            client.session,
+            "delete",
+            return_value=mock_response({"message": "nope"}, status_code=404),
+        ):
+            with pytest.raises(FireflyConnectionError):
+                client.delete_transaction("99")
+
+    def test_non_204_status_carries_status_code_and_response_body(self):
+        client = make_client()
+        body = {"message": "not found"}
+        with patch.object(
+            client.session, "delete", return_value=mock_response(body, status_code=404)
+        ):
+            with pytest.raises(FireflyConnectionError) as exc_info:
+                client.delete_transaction("99")
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.response_body == body
+
+    def test_non_json_error_body_leaves_response_body_none(self):
+        client = make_client()
+        resp = MagicMock()
+        resp.status_code = 500
+        resp.json.side_effect = requests.exceptions.JSONDecodeError(
+            "Expecting value", "not json", 0
+        )
+        with patch.object(client.session, "delete", return_value=resp):
+            with pytest.raises(FireflyConnectionError) as exc_info:
+                client.delete_transaction("99")
+        assert exc_info.value.status_code == 500
+        assert exc_info.value.response_body is None
+
+    def test_raises_on_connection_error(self):
+        client = make_client()
+        with patch.object(
+            client.session, "delete", side_effect=requests.ConnectionError("refused")
+        ):
+            with pytest.raises(FireflyConnectionError):
+                client.delete_transaction("99")
+
+
+# ---------------------------------------------------------------------------
 # create_bill
 # ---------------------------------------------------------------------------
 
