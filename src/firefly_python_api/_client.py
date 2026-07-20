@@ -113,6 +113,28 @@ class FireflyClient:
                 response_body=body,
             )
 
+    def _delete_expect(self, endpoint: str, expected_statuses: tuple[int, ...]) -> None:
+        """DELETE ``endpoint``; raise unless the response status is in
+        ``expected_statuses``.
+
+        Mirrors :meth:`_post_expect`: any status code outside
+        ``expected_statuses`` raises :class:`FireflyConnectionError`.
+        """
+        try:
+            response = self.session.delete(endpoint)
+        except requests.RequestException as exc:
+            raise FireflyConnectionError(f"DELETE {endpoint} failed: {exc}") from exc
+        if response.status_code not in expected_statuses:
+            try:
+                body = cast(dict[str, Any], response.json())
+            except ValueError:
+                body = None
+            raise FireflyConnectionError(
+                f"DELETE {endpoint} failed: unexpected status {response.status_code}",
+                status_code=response.status_code,
+                response_body=body,
+            )
+
     # ------------------------------------------------------------------
     # REQ-001 — connectivity
     # ------------------------------------------------------------------
@@ -198,6 +220,49 @@ class FireflyClient:
             On any network error or non-2xx HTTP response.
         """
         self._post(f"{self.url}/api/v1/transactions", dict(payload))
+
+    def get_transactions_for_account(self, account_id: str) -> list[str]:
+        """Return all transaction IDs for an account, fetching every page automatically.
+
+        Parameters
+        ----------
+        account_id:
+            Firefly III account ID.
+
+        Returns
+        -------
+        list[str]
+            Transaction IDs in API response order. Empty when the account
+            has no transactions.
+        """
+        transaction_ids: list[str] = []
+        page = 1
+        while True:
+            data = self._get(
+                f"{self.url}/api/v1/accounts/{account_id}/transactions",
+                params={"page": page},
+            )
+            for item in data["data"]:
+                transaction_ids.append(item["id"])
+            if page >= data["meta"]["pagination"]["total_pages"]:
+                break
+            page += 1
+        return transaction_ids
+
+    def delete_transaction(self, transaction_id: str) -> None:
+        """Delete a transaction from Firefly III.
+
+        Parameters
+        ----------
+        transaction_id:
+            Firefly III transaction ID.
+
+        Raises
+        ------
+        FireflyConnectionError
+            On any network error or a response status other than 204.
+        """
+        self._delete_expect(f"{self.url}/api/v1/transactions/{transaction_id}", (204,))
 
     # ------------------------------------------------------------------
     # REQ-003 — reporting and resource read methods
