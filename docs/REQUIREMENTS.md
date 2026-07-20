@@ -282,3 +282,28 @@ and re-importing transaction history, without reimplementing the HTTP call.
 - No new runtime dependencies.
 - `mypy --strict` must pass.
 - Unit test coverage must not drop below baseline.
+
+## REQ-010 Account Opening Balance Read
+
+**As a** consumer application (e.g. firefly-bank-importer),
+**I want** a method to read an account's current opening balance and opening balance date via
+`FireflyClient`,
+**so that** I can decide whether `set_opening_balance()` needs to be called at all before
+clearing and re-importing transaction history, without reimplementing the HTTP call.
+
+### Use cases
+
+- UC-010-1: `get_opening_balance(account_id)` — `GET /api/v1/accounts/{id}`; on success,
+  returns an `OpeningBalance` (`TypedDict`) with `balance: str | None` and
+  `date: str | None`, read from the response's `attributes.opening_balance` and
+  `attributes.opening_balance_date`, defaulting to `None` when the account has no
+  opening balance set.
+- UC-010-2: Uses the existing `_get` helper (same behavior as `get_asset_accounts()` and
+  `get_latest_transaction_date()`); raises `FireflyConnectionError` on any network error
+  or non-2xx HTTP response, including a 404 for an unknown `account_id`.
+
+### Constraints
+
+- No new runtime dependencies.
+- `mypy --strict` must pass.
+- Unit test coverage must not drop below baseline.

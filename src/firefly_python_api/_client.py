@@ -14,6 +14,7 @@ from firefly_python_api._types import (
     BudgetData,
     BudgetLimitData,
     CategoryData,
+    OpeningBalance,
     TransactionPayload,
     TransactionRead,
 )
@@ -383,6 +384,36 @@ class FireflyClient:
             (including 422 for a duplicate bill name).
         """
         self._post_expect(f"{self.url}/api/v1/bills", dict(payload), (200, 201))
+
+    # ------------------------------------------------------------------
+    # REQ-010 — account opening balance read
+    # ------------------------------------------------------------------
+
+    def get_opening_balance(self, account_id: str) -> OpeningBalance:
+        """Return an account's current opening balance and opening balance date.
+
+        Parameters
+        ----------
+        account_id:
+            Firefly III account ID.
+
+        Returns
+        -------
+        OpeningBalance
+            ``balance`` and ``date`` default to ``None`` when the account has
+            no opening balance set.
+
+        Raises
+        ------
+        FireflyConnectionError
+            On any network error or non-2xx HTTP response (including 404 for
+            an unknown ``account_id``).
+        """
+        attributes = self._get(f"{self.url}/api/v1/accounts/{account_id}")["data"]["attributes"]
+        return OpeningBalance(
+            balance=attributes.get("opening_balance"),
+            date=attributes.get("opening_balance_date"),
+        )
 
     # ------------------------------------------------------------------
     # REQ-009 — account opening balance

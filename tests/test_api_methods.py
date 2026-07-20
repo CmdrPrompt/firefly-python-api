@@ -947,6 +947,62 @@ class TestSetOpeningBalance:
         assert exc_info.value.response_body is None
 
 
+# ---------------------------------------------------------------------------
+# get_opening_balance
+# ---------------------------------------------------------------------------
+
+
+class TestGetOpeningBalance:
+    def test_returns_balance_and_date(self):
+        client = make_client()
+        payload = {
+            "data": {
+                "id": "42",
+                "attributes": {
+                    "opening_balance": "100.00",
+                    "opening_balance_date": "2024-01-01",
+                },
+            }
+        }
+        with patch.object(client.session, "get", return_value=mock_response(payload)) as mock_get:
+            result = client.get_opening_balance("42")
+        mock_get.assert_called_once_with("https://firefly.example.com/api/v1/accounts/42")
+        assert result == {"balance": "100.00", "date": "2024-01-01"}
+
+    def test_returns_none_when_opening_balance_absent(self):
+        client = make_client()
+        payload = {"data": {"id": "42", "attributes": {}}}
+        with patch.object(client.session, "get", return_value=mock_response(payload)):
+            result = client.get_opening_balance("42")
+        assert result == {"balance": None, "date": None}
+
+    def test_returns_none_when_opening_balance_null(self):
+        client = make_client()
+        payload = {
+            "data": {
+                "id": "42",
+                "attributes": {"opening_balance": None, "opening_balance_date": None},
+            }
+        }
+        with patch.object(client.session, "get", return_value=mock_response(payload)):
+            result = client.get_opening_balance("42")
+        assert result == {"balance": None, "date": None}
+
+    def test_raises_on_404(self):
+        client = make_client()
+        resp = MagicMock()
+        resp.raise_for_status.side_effect = requests.HTTPError("404")
+        with patch.object(client.session, "get", return_value=resp):
+            with pytest.raises(FireflyConnectionError):
+                client.get_opening_balance("does-not-exist")
+
+    def test_raises_on_connection_error(self):
+        client = make_client()
+        with patch.object(client.session, "get", side_effect=requests.ConnectionError("refused")):
+            with pytest.raises(FireflyConnectionError):
+                client.get_opening_balance("42")
+
+
 class TestPutExpectHelper:
     def test_issues_put_with_json_payload(self):
         client = make_client()
