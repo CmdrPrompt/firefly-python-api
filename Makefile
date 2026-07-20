@@ -1,5 +1,3 @@
-include .butler/Makefile
-
 .PHONY: help
 help:
 	@$(MAKE) --no-print-directory -f .butler/Makefile help
@@ -13,3 +11,5 @@ test:
 
 test-integration:
 	uv run pytest tests/integration/ -v
+
+include .butler/Makefile
