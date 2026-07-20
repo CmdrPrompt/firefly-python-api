@@ -46,6 +46,12 @@ of any consumer project's configuration flow.
 - UC-002-3: `create_transaction(payload)` — `POST /api/v1/transactions`;
   treats HTTP 200 and 201 as success; raises `FireflyConnectionError` on any
   other status code.
+- UC-002-4: `get_transactions_for_account(account_id)` — paginated
+  `GET /api/v1/accounts/{id}/transactions`; returns a list of transaction IDs
+  (as strings), all pages fetched automatically.
+- UC-002-5: `delete_transaction(transaction_id)` — `DELETE /api/v1/transactions/{id}`;
+  treats HTTP 204 as success; raises `FireflyConnectionError` on any other
+  status code.
 
 ### Constraints
 
