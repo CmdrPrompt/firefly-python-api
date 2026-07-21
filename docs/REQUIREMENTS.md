@@ -101,6 +101,11 @@ of any consumer project's configuration flow.
   `None` for the first account returned by `get_asset_accounts()`.
 - UC-004-4: `get_bills()`, `get_budgets()`, `get_categories()`, and `get_summary()`
   return without error.
+- UC-004-5: `get_transactions_for_account(account_id)` returns a list of
+  transaction ID strings for the first account returned by
+  `get_asset_accounts()`, and `get_budget_limits(budget_id)` returns a list
+  for the first budget returned by `get_budgets()` (skipped when no budget
+  exists), both without error.
 
 ### Constraints
 

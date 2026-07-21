@@ -163,3 +163,9 @@ returns a full ISO datetime instead of `YYYY-MM-DD` for
 **Branch:** `git checkout task/016-transactions-by-type`
 **Stage:** `git add src/firefly_python_api/_client.py src/firefly_python_api/_types.py tests/test_api_methods.py tests/test_transaction_flatten.py tests/integration/test_integration.py docs/REQUIREMENTS.md docs/tasks/TASK-016-transactions-by-type.md CHANGELOG.md`
 **Commit:** `git commit -m "Add get_transactions_by_type and revert ineffective get_latest_transaction_date filter"`
+
+**Note (post-completion):** TASK-017 (integration tests for
+`get_transactions_for_account` and `get_budget_limits`) was built on top of
+this same `task/016-transactions-by-type` branch, at the user's explicit
+choice, rather than starting a fresh branch from `main` — this branch was
+not yet merged when TASK-017 began. See `docs/tasks/TASK-017-remaining-read-integration-tests.md`.
