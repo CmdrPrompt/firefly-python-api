@@ -361,3 +361,36 @@ gets, instead of reimplementing them for the opposite transaction direction.
 - Pagination, split flattening, and `TransactionRead` construction shall be
   shared with `get_withdrawal_transactions()` rather than duplicated; the two
   methods differ only in the `type` query parameter.
+
+## REQ-012 Transaction Tags
+
+**As a** consumer application (e.g. firefly-bills-analyzer),
+**I want** each transaction split to carry the tags the user applied to it,
+**so that** I can let the user override a classification I derived from the
+category, on individual transactions, without them having to restructure their
+categories to express an exception.
+
+### Use cases
+
+- UC-012-1: The system shall include a `tags: list[str]` field in
+  `TransactionRead`, holding the split's `attributes.transactions[].tags` value
+  from the Firefly III response.
+- UC-012-2: If the tags field is absent from the API response, or is `null`,
+  then the system shall set `tags` to an empty list, rather than to `None`. A
+  transaction with no tags and a transaction whose tags were not returned are
+  the same thing to a consumer, and an empty list removes a null check from
+  every call site.
+- UC-012-3: The system shall populate `tags` identically for
+  `get_withdrawal_transactions()` and `get_deposit_transactions()`, since both
+  build their records through the same split-flattening helper.
+- UC-012-4: The system shall preserve the tag strings as returned, without
+  case folding, trimming, or sorting. Tag matching semantics belong to the
+  consumer.
+
+### Constraints
+
+- No new runtime dependencies.
+- `mypy --strict` must pass.
+- Unit test coverage must not drop below baseline.
+- Additive only: existing fields of `TransactionRead` are unchanged, and no
+  existing method signature changes.
