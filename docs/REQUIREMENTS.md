@@ -317,3 +317,47 @@ clearing and re-importing transaction history, without reimplementing the HTTP c
 - No new runtime dependencies.
 - `mypy --strict` must pass.
 - Unit test coverage must not drop below baseline.
+
+## REQ-011 Deposit Transaction Fetching
+
+**As a** consumer application (e.g. firefly-bills-analyzer),
+**I want** a method that returns all deposit transactions in a date range as typed data,
+**so that** I can analyze incoming money — recurring salary payments in particular —
+with the same pagination handling and split flattening the withdrawal side already
+gets, instead of reimplementing them for the opposite transaction direction.
+
+### Use cases
+
+- UC-011-1: `get_deposit_transactions(start, end, on_page=None)` — paginated
+  `GET /api/v1/transactions?type=deposit&start=YYYY-MM-DD&end=YYYY-MM-DD&page=N`;
+  follows all pages until `total_pages` is reached; returns `list[TransactionRead]`.
+- UC-011-2: When a Firefly III transaction object returned by
+  `get_deposit_transactions()` contains multiple splits under
+  `attributes.transactions`, the system shall flatten each split into its own
+  `TransactionRead` entry, by the same rule as UC-006-2.
+- UC-011-3: The system shall represent each deposit split with the existing
+  `TransactionRead` `TypedDict` and shall not introduce a separate type. The
+  fields carry the same API values as on the withdrawal side, with the account
+  roles reversed by Firefly III itself: for a deposit, `source_name` is the
+  revenue account the money came from (e.g. an employer) and
+  `destination_name` is the asset account it landed in. Absent fields are set
+  to `None`, per UC-006-3 and UC-006-5.
+- UC-011-4: The system shall accept the optional `on_page(page, total_pages)`
+  callback with the same semantics as REQ-008 defines for
+  `get_withdrawal_transactions()`: invoked after each page has been fetched and
+  parsed, with exceptions propagating to the caller and stopping further page
+  fetches.
+- UC-011-5: The system shall not return transactions of type `transfer`.
+  Firefly III types a movement between two of the user's own asset accounts as
+  `transfer`, not as a deposit, so the `type=deposit` filter excludes them at
+  the API. Consumers may therefore treat every returned record as money
+  entering the household from outside it.
+
+### Constraints
+
+- No new runtime dependencies.
+- `mypy --strict` must pass.
+- Unit test coverage must not drop below baseline.
+- Pagination, split flattening, and `TransactionRead` construction shall be
+  shared with `get_withdrawal_transactions()` rather than duplicated; the two
+  methods differ only in the `type` query parameter.
