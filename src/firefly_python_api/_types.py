@@ -119,3 +119,6 @@ class TransactionRead(TypedDict):
     """Source account name (funds are withdrawn from), or ``None`` when absent."""
     source_id: str | None
     """Source account ID, or ``None`` when absent."""
+    tags: list[str]
+    """Tag strings carried by this split, in API order. ``[]`` when absent or
+    ``null``; never ``None``."""

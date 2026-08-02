@@ -34,7 +34,8 @@ def _split_to_transaction_read(split: dict[str, Any]) -> TransactionRead:
     TransactionRead
         ``date`` truncated to ``YYYY-MM-DD``; ``destination_name``,
         ``category_name``, ``source_name`` and ``source_id`` default to
-        ``None`` when absent from ``split``.
+        ``None`` when absent from ``split``. ``tags`` defaults to ``[]``
+        when absent or ``null``, and is never ``None``.
     """
     return TransactionRead(
         date=split["date"][:10],
@@ -43,6 +44,7 @@ def _split_to_transaction_read(split: dict[str, Any]) -> TransactionRead:
         category_name=split.get("category_name"),
         source_name=split.get("source_name"),
         source_id=split.get("source_id"),
+        tags=split.get("tags") or [],
     )
 
 
