@@ -371,6 +371,7 @@ class TestGetWithdrawalTransactions:
                 "category_name": "Groceries",
                 "source_name": "Checking Account",
                 "source_id": "7",
+                "tags": [],
             }
         ]
 
@@ -443,6 +444,7 @@ class TestGetWithdrawalTransactions:
                 "category_name": "Misc",
                 "source_name": None,
                 "source_id": None,
+                "tags": [],
             },
             {
                 "date": "2024-02-05",
@@ -451,6 +453,7 @@ class TestGetWithdrawalTransactions:
                 "category_name": "Misc",
                 "source_name": None,
                 "source_id": None,
+                "tags": [],
             },
         ]
 
@@ -512,6 +515,7 @@ class TestGetWithdrawalTransactions:
                 "category_name": None,
                 "source_name": None,
                 "source_id": None,
+                "tags": [],
             }
         ]
 
@@ -575,6 +579,7 @@ class TestGetWithdrawalTransactions:
                 "category_name": None,
                 "source_name": None,
                 "source_id": None,
+                "tags": [],
             }
         ]
 
