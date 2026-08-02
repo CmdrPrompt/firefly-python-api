@@ -147,6 +147,7 @@ def _(context: dict) -> None:
             "pytest",
             "tests/test_transaction_flatten.py",
             "tests/bdd/steps/test_task_016_fetch_deposit_transactions_steps.py",
+            "tests/test_api_methods.py",
             "-q",
         ],
         cwd=repo_root,
@@ -195,7 +196,10 @@ def _(context: dict) -> None:
     assert context["result"][1]["tags"] == ["Shared", "Household"]
 
 
-@then("they pass unmodified")
+@then("they pass, and no field other than tags changed value")
 def _(context: dict) -> None:
+    # tests/test_api_methods.py asserts full-dict equality for withdrawal/deposit
+    # records, so a green run here proves every field besides the newly added
+    # tags key still holds its prior value.
     result = context["subprocess_result"]
     assert result.returncode == 0, result.stdout + result.stderr

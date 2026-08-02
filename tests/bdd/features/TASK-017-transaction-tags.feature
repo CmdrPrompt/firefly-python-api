@@ -38,4 +38,4 @@ Feature: Transaction tags
   Scenario: Existing fields are unchanged
     Given the completed implementation
     When the existing get_withdrawal_transactions and get_deposit_transactions tests are run
-    Then they pass unmodified
+    Then they pass, and no field other than tags changed value

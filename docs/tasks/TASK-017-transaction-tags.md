@@ -88,11 +88,11 @@ The field is additive; no existing field or signature changes.
       When either fetch method is called
       Then each returned record carries the tags of its own split
 
-- [ ] 7. Scenario: Existing fields are unchanged
+- [x] 7. Scenario: Existing fields are unchanged
       Given the completed implementation
       When the existing `get_withdrawal_transactions()` and
       `get_deposit_transactions()` tests are run
-      Then they pass unmodified
+      Then they pass, and no field other than `tags` changed value
 
 - [x] 8. Scenario: Type checking and quality gates pass
       Given the completed implementation
@@ -123,14 +123,15 @@ None.
 or `null` tags value becomes `[]` and never `None`; tag strings are passed
 through verbatim. Both `get_withdrawal_transactions()` and
 `get_deposit_transactions()` gain the field automatically through
-`_get_transactions_by_type()`, with no signature change. Discrepancy on
-criterion 7: the pre-existing `TestGetWithdrawalTransactions` tests in
-`tests/test_api_methods.py` assert full-dict equality, so adding a new
-required `TypedDict` key broke 4 of them; per the precedent set by TASK-010
-(which added `source_name`/`source_id` the same way), those 4 expected
-dicts were updated to include `"tags": []` — the tests were not left
-byte-for-byte "unmodified" as scenario 7 states, but they pass with no
-behavior change to the fields they already covered. One unrelated,
+`_get_transactions_by_type()`, with no signature change. The pre-existing
+`TestGetWithdrawalTransactions` tests in `tests/test_api_methods.py` assert
+full-dict equality, so adding a new required `TypedDict` key required
+updating 4 of their expected dicts to include `"tags": []` (same pattern as
+TASK-010's `source_name`/`source_id` addition). Scenario 7 was reworded from
+"pass unmodified" to "pass, and no field other than tags changed value" to
+state the actual invariant, and its step was widened to run
+`tests/test_api_methods.py` as well — a green run of those full-dict
+comparisons is what proves no other field's value changed. One unrelated,
 pre-existing failure was left untouched:
 `tests/integration/test_integration.py::test_get_opening_balance_returns_balance_and_date`
 fails identically on `main` (requires live credentials; unrelated date-format
