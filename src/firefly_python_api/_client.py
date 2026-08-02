@@ -452,8 +452,59 @@ class FireflyClient:
         )
 
     # ------------------------------------------------------------------
-    # REQ-006 — withdrawal transactions
+    # REQ-006 — withdrawal transactions / REQ-011 — deposit transactions
     # ------------------------------------------------------------------
+
+    def _get_transactions_by_type(
+        self,
+        txn_type: str,
+        start: str,
+        end: str,
+        on_page: Callable[[int, int], None] | None = None,
+    ) -> list[TransactionRead]:
+        """Return all transactions of `txn_type` in a date range, fetching every page.
+
+        Each Firefly III transaction object may contain multiple splits under
+        ``attributes.transactions``; each split is flattened into its own
+        :class:`TransactionRead` entry.
+
+        Parameters
+        ----------
+        txn_type:
+            Firefly III transaction type filter, e.g. ``"withdrawal"`` or
+            ``"deposit"``.
+        start:
+            Start date in ``YYYY-MM-DD`` format.
+        end:
+            End date in ``YYYY-MM-DD`` format.
+        on_page:
+            Optional callback invoked as ``on_page(page, total_pages)`` after
+            each page has been fetched and parsed. `page` is the 1-indexed
+            page just completed. Exceptions raised by `on_page` propagate to
+            the caller and stop further page fetches.
+
+        Returns
+        -------
+        list[TransactionRead]
+            Flattened transaction splits.
+        """
+        transactions: list[TransactionRead] = []
+        page = 1
+        while True:
+            data = self._get(
+                f"{self.url}/api/v1/transactions",
+                params={"type": txn_type, "start": start, "end": end, "page": page},
+            )
+            for item in data["data"]:
+                for split in item["attributes"]["transactions"]:
+                    transactions.append(_split_to_transaction_read(split))
+            total_pages = data["meta"]["pagination"]["total_pages"]
+            if on_page is not None:
+                on_page(page, total_pages)
+            if page >= total_pages:
+                break
+            page += 1
+        return transactions
 
     def get_withdrawal_transactions(
         self,
@@ -484,20 +535,45 @@ class FireflyClient:
         list[TransactionRead]
             Flattened withdrawal transaction splits.
         """
-        transactions: list[TransactionRead] = []
-        page = 1
-        while True:
-            data = self._get(
-                f"{self.url}/api/v1/transactions",
-                params={"type": "withdrawal", "start": start, "end": end, "page": page},
-            )
-            for item in data["data"]:
-                for split in item["attributes"]["transactions"]:
-                    transactions.append(_split_to_transaction_read(split))
-            total_pages = data["meta"]["pagination"]["total_pages"]
-            if on_page is not None:
-                on_page(page, total_pages)
-            if page >= total_pages:
-                break
-            page += 1
-        return transactions
+        return self._get_transactions_by_type("withdrawal", start, end, on_page)
+
+    def get_deposit_transactions(
+        self,
+        start: str,
+        end: str,
+        on_page: Callable[[int, int], None] | None = None,
+    ) -> list[TransactionRead]:
+        """Return all deposit transactions in a date range, fetching every page.
+
+        Each Firefly III transaction object may contain multiple splits under
+        ``attributes.transactions``; each split is flattened into its own
+        :class:`TransactionRead` entry.
+
+        Account roles are reversed relative to the withdrawal case: this is
+        Firefly III's own convention, not something this library normalizes.
+        For a deposit, ``source_name`` is the revenue account the money came
+        from (e.g. an employer) and ``destination_name`` is the asset account
+        it landed in.
+
+        The ``type=deposit`` filter excludes transfers between two of the
+        user's own asset accounts (Firefly III types those as ``transfer``),
+        so every returned record represents money entering from outside.
+
+        Parameters
+        ----------
+        start:
+            Start date in ``YYYY-MM-DD`` format.
+        end:
+            End date in ``YYYY-MM-DD`` format.
+        on_page:
+            Optional callback invoked as ``on_page(page, total_pages)`` after
+            each page has been fetched and parsed. `page` is the 1-indexed
+            page just completed. Exceptions raised by `on_page` propagate to
+            the caller and stop further page fetches.
+
+        Returns
+        -------
+        list[TransactionRead]
+            Flattened deposit transaction splits.
+        """
+        return self._get_transactions_by_type("deposit", start, end, on_page)
